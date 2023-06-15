@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+    bar "github.com/schollz/progressbar/v3"
+    "time"
 )
 
 const TestDomain = "https://testbooru.donmai.us"
@@ -87,6 +89,8 @@ func main() {
 			urls = append(urls, sc.Text())
 		}
 
+        b := bar.NewOptions(len(urls), bar.OptionSetWidth(50), bar.OptionSetDescription("downloading images..."))
+
 		var wg sync.WaitGroup
 		wg.Add(len(urls))
 
@@ -94,6 +98,8 @@ func main() {
             ext := "." + strings.Split(u, ".")[len(strings.Split(u, "."))-1]
 			fileName := strconv.Itoa(idx) + ext
 			go downloadImg(u, "/tmp/"+fileName, &wg)
+            b.Add(1)
+            time.Sleep(5 * time.Millisecond)
 		}
 
 		wg.Wait()
