@@ -91,7 +91,8 @@ func main() {
 		wg.Add(len(urls))
 
 		for idx, u := range urls {
-			fileName := strconv.Itoa(idx) + "." + strings.Split(u, ".")[1]
+            ext := "." + strings.Split(u, ".")[len(strings.Split(u, "."))-1]
+			fileName := strconv.Itoa(idx) + ext
 			go downloadImg(u, "/tmp/"+fileName, &wg)
 		}
 
