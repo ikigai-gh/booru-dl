@@ -45,7 +45,6 @@ const (
 func try(err error) {
 	if err != nil {
 		fmt.Println(err)
-		panic("oops!")
 	}
 }
 
@@ -105,28 +104,35 @@ func main() {
 		wg.Wait()
 		// just print urls to stdout
 	} else {
-		postsResp, err := http.Get(url + "/" + PostsStr + "&tags=" + *tagString)
-		try(err)
+        pageNumber := 1
+        for {
+            postsResp, err := http.Get(url + "/" + PostsStr + "&page=" + strconv.Itoa(pageNumber) + "&tags=" + *tagString)
+            try(err)
 
-		defer postsResp.Body.Close()
+            defer postsResp.Body.Close()
 
-		postsBytes, err := io.ReadAll(postsResp.Body)
-		try(err)
+            postsBytes, err := io.ReadAll(postsResp.Body)
+            try(err)
 
-		var posts []Post
-		err = json.Unmarshal(postsBytes, &posts)
-		try(err)
-		for _, p := range posts {
-			var urlString string
-			if *useLargeFileUrls {
-				urlString = p.LargeFileUrl
-			} else {
-				urlString = p.PreviewFileUrl
-			}
-			// Search only for pics
-			if strings.HasSuffix(urlString, ".jpg") || strings.HasSuffix(urlString, ".png") {
-				fmt.Println(urlString)
-			}
-		}
+            var posts []Post
+            err = json.Unmarshal(postsBytes, &posts)
+            if len(posts) == 0 {
+                break
+            }
+            try(err)
+            for _, p := range posts {
+                var urlString string
+                if *useLargeFileUrls {
+                    urlString = p.LargeFileUrl
+                } else {
+                    urlString = p.PreviewFileUrl
+                }
+                // Search only for pics
+                if strings.HasSuffix(urlString, ".jpg") || strings.HasSuffix(urlString, ".png") {
+                    fmt.Println(urlString)
+                }
+            }
+            pageNumber++
+        }
 	}
 }
