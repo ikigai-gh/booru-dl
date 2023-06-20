@@ -128,7 +128,7 @@ func main() {
 					urlString = p.PreviewFileUrl
 				}
 				// Search only for pics
-				if strings.HasSuffix(urlString, ".jpg") || strings.HasSuffix(urlString, ".png") {
+				if urlString != "" && (strings.HasSuffix(urlString, ".jpg") || strings.HasSuffix(urlString, ".png")) {
 					fmt.Println(urlString)
 				}
 			}
