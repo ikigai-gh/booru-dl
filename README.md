@@ -9,7 +9,7 @@ View, search &amp; download your awesome waifus from plenty of boards
 Compile this utility at least with go 1.20:
 
 ```bash
-cd booru-dl && go build
+cd booru-dl && make
 ```
 
 ## Run
