@@ -23,10 +23,15 @@ const PostLimit = 200
 // 2 is a maximum tag limit on danbooru
 const TagLimit = 2
 const PostsStr = "posts.json?limit=200"
+const TagsStr = "tags.json?limit=200"
 
 type Post struct {
 	LargeFileUrl   string `json:"large_file_url"`
 	PreviewFileUrl string `json:"preview_file_url"`
+}
+
+type Tag struct {
+    Name string `json:"name"`
 }
 
 type Environment string
@@ -127,4 +132,35 @@ func GetPosts(tagString string, useLargeFileUrls bool, urlsFile string) {
 			pageNumber++
 		}
 	}
+}
+
+func GetTags() {
+	env := Environment(os.Getenv("BOORU_ENV"))
+	var url string
+	if env == DEV {
+		url = TestDomain
+	} else {
+		url = ProdDomain
+	}
+    pageNumber := 1
+    for {
+        tagsResp, err := http.Get(url + "/" + TagsStr + "&page=" + strconv.Itoa(pageNumber))
+        try(err)
+
+        defer tagsResp.Body.Close()
+
+        tagsBytes, err := io.ReadAll(tagsResp.Body)
+        try(err)
+
+        var tags []Tag
+        err = json.Unmarshal(tagsBytes, &tags)
+        if len(tags) == 0 {
+            break
+        }
+        try(err)
+        for _, t := range tags {
+            fmt.Println(t)
+        }
+        pageNumber++
+    }
 }
