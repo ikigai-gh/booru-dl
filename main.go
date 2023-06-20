@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	bar "github.com/schollz/progressbar/v3"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
-    bar "github.com/schollz/progressbar/v3"
-    "time"
+	"time"
 )
 
 const TestDomain = "https://testbooru.donmai.us"
@@ -88,51 +88,51 @@ func main() {
 			urls = append(urls, sc.Text())
 		}
 
-        b := bar.NewOptions(len(urls), bar.OptionSetWidth(50), bar.OptionSetDescription("downloading images..."))
+		b := bar.NewOptions(len(urls), bar.OptionSetWidth(50), bar.OptionSetDescription("downloading images..."))
 
 		var wg sync.WaitGroup
 		wg.Add(len(urls))
 
 		for idx, u := range urls {
-            ext := "." + strings.Split(u, ".")[len(strings.Split(u, "."))-1]
+			ext := "." + strings.Split(u, ".")[len(strings.Split(u, "."))-1]
 			fileName := strconv.Itoa(idx) + ext
 			go downloadImg(u, "/tmp/"+fileName, &wg)
-            b.Add(1)
-            time.Sleep(5 * time.Millisecond)
+			b.Add(1)
+			time.Sleep(5 * time.Millisecond)
 		}
 
 		wg.Wait()
 		// just print urls to stdout
 	} else {
-        pageNumber := 1
-        for {
-            postsResp, err := http.Get(url + "/" + PostsStr + "&page=" + strconv.Itoa(pageNumber) + "&tags=" + *tagString)
-            try(err)
+		pageNumber := 1
+		for {
+			postsResp, err := http.Get(url + "/" + PostsStr + "&page=" + strconv.Itoa(pageNumber) + "&tags=" + *tagString)
+			try(err)
 
-            defer postsResp.Body.Close()
+			defer postsResp.Body.Close()
 
-            postsBytes, err := io.ReadAll(postsResp.Body)
-            try(err)
+			postsBytes, err := io.ReadAll(postsResp.Body)
+			try(err)
 
-            var posts []Post
-            err = json.Unmarshal(postsBytes, &posts)
-            if len(posts) == 0 {
-                break
-            }
-            try(err)
-            for _, p := range posts {
-                var urlString string
-                if *useLargeFileUrls {
-                    urlString = p.LargeFileUrl
-                } else {
-                    urlString = p.PreviewFileUrl
-                }
-                // Search only for pics
-                if strings.HasSuffix(urlString, ".jpg") || strings.HasSuffix(urlString, ".png") {
-                    fmt.Println(urlString)
-                }
-            }
-            pageNumber++
-        }
+			var posts []Post
+			err = json.Unmarshal(postsBytes, &posts)
+			if len(posts) == 0 {
+				break
+			}
+			try(err)
+			for _, p := range posts {
+				var urlString string
+				if *useLargeFileUrls {
+					urlString = p.LargeFileUrl
+				} else {
+					urlString = p.PreviewFileUrl
+				}
+				// Search only for pics
+				if strings.HasSuffix(urlString, ".jpg") || strings.HasSuffix(urlString, ".png") {
+					fmt.Println(urlString)
+				}
+			}
+			pageNumber++
+		}
 	}
 }
