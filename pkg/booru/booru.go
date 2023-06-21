@@ -60,7 +60,7 @@ func downloadImg(url string, filePath string, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func GetPosts(tagString string, useLargeFileUrls bool, urlsFile string) {
+func GetPosts(tagString string, useLargeFileUrls bool, urlsFile string, maxPages int) {
 	env := Environment(os.Getenv("BOORU_ENV"))
 	var url string
 	if env == DEV {
@@ -113,7 +113,7 @@ func GetPosts(tagString string, useLargeFileUrls bool, urlsFile string) {
 
 			var posts []Post
 			err = json.Unmarshal(postsBytes, &posts)
-			if len(posts) == 0 {
+			if pageNumber > maxPages || len(posts) == 0 {
 				break
 			}
 			try(err)
