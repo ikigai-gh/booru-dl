@@ -1,5 +1,10 @@
-booru-dl: main.go
-	go build .
+GOOS ?= linux
+GOARCH ?= amd64
+BINARY = booru-dl-${GOOS}-${GOARCH}
+LDFLAGS = -ldflags="-s -w -extldflags=-static"
+
+booru-dl:
+	GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=0 go build ${LDFLAGS} -o ${BINARY}
 lint:
 	go fmt .
 run:
