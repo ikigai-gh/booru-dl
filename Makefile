@@ -1,7 +1,8 @@
 GOOS ?= linux
 GOARCH ?= amd64
-BINARY = booru-dl-${GOOS}-${GOARCH}
-LDFLAGS = -ldflags="-s -w -extldflags=-static"
+VERSION = $(shell git describe --tags)
+BINARY = booru-dl-${VERSION}-${GOOS}-${GOARCH}
+LDFLAGS = -ldflags="-s -w -extldflags=-static -X github.com/ikigai-gh/booru-dl/cmd/booru.version=${VERSION}"
 
 booru-dl:
 	GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=0 go build ${LDFLAGS} -o ${BINARY}

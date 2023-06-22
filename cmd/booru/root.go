@@ -6,7 +6,8 @@ import (
     "github.com/spf13/cobra"
 )
 
-var version = "1.1.0"
+// Version is overrided via ldflags. See Makefile in root directory
+var version = ""
 
 var rootCmd = &cobra.Command {
     Use: "booru-dl",
