@@ -63,7 +63,7 @@ func GetPosts(tagString string, useLargeFileUrls bool, urlsFile string, maxPages
 
 		for idx, u := range urls {
 			ext := "." + strings.Split(u, ".")[len(strings.Split(u, "."))-1]
-            filePath := "/tmp/" + strconv.Itoa(idx) + ext
+            filePath := os.TempDir() + string(os.PathSeparator) + strconv.Itoa(idx) + ext
             go func(url string, wg *sync.WaitGroup) {
                 bytesResp, err := Request(url)
                 try(err)
