@@ -36,43 +36,13 @@ type Tag struct {
 
 type Environment string
 
-const (
-	DEV  Environment = "DEV"
-	PROD Environment = "PROD"
-)
-
 func try(err error) {
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
-func downloadImg(url string, filePath string, wg *sync.WaitGroup) {
-	resp, err := http.Get(url)
-	try(err)
-	defer resp.Body.Close()
-	bytesResp, err := io.ReadAll(resp.Body)
-	file, err := os.Create(filePath)
-	defer file.Close()
-	try(err)
-	_, err = file.Write(bytesResp)
-	try(err)
-	wg.Done()
-}
-
 func GetPosts(tagString string, useLargeFileUrls bool, urlsFile string, maxPages int) {
-	env := Environment(os.Getenv("BOORU_ENV"))
-	var url string
-	if env == DEV {
-		url = TestDomain
-	} else {
-		url = ProdDomain
-	}
-
-	if len(strings.Split(tagString, " ")) > TagLimit {
-		panic("Only " + strconv.Itoa(TagLimit) + " tags are allowed!")
-	}
-
 	// download images from file
 	if urlsFile != "" {
 		var urls []string
@@ -87,13 +57,23 @@ func GetPosts(tagString string, useLargeFileUrls bool, urlsFile string, maxPages
 
 		b := bar.NewOptions(len(urls), bar.OptionSetWidth(50), bar.OptionSetDescription("downloading images..."))
 
+        fmt.Println("Number of images to download: " + strconv.Itoa(len(urls)))
 		var wg sync.WaitGroup
 		wg.Add(len(urls))
 
 		for idx, u := range urls {
 			ext := "." + strings.Split(u, ".")[len(strings.Split(u, "."))-1]
-			fileName := strconv.Itoa(idx) + ext
-			go downloadImg(u, "/tmp/"+fileName, &wg)
+            filePath := "/tmp/" + strconv.Itoa(idx) + ext
+            go func(url string, wg *sync.WaitGroup) {
+                bytesResp, err := Request(url)
+                try(err)
+                file, err := os.Create(filePath)
+                defer file.Close()
+                try(err)
+                _, err = file.Write(bytesResp)
+                try(err)
+                wg.Done()
+                }(u, &wg)
 			b.Add(1)
 			time.Sleep(5 * time.Millisecond)
 		}
@@ -101,50 +81,20 @@ func GetPosts(tagString string, useLargeFileUrls bool, urlsFile string, maxPages
 		wg.Wait()
 		// just print urls to stdout
 	} else {
-		pageNumber := 1
-		for {
-			postsResp, err := http.Get(url + "/" + PostsStr + "&page=" + strconv.Itoa(pageNumber) + "&tags=" + tagString)
-			try(err)
-
-			defer postsResp.Body.Close()
-
-			postsBytes, err := io.ReadAll(postsResp.Body)
-			try(err)
-
-			var posts []Post
-			err = json.Unmarshal(postsBytes, &posts)
-			if pageNumber > maxPages || len(posts) == 0 {
-				break
-			}
-			try(err)
-			for _, p := range posts {
-				var urlString string
-				if useLargeFileUrls {
-					urlString = p.LargeFileUrl
-				} else {
-					urlString = p.PreviewFileUrl
-				}
-				// Search only for pics
-				if urlString != "" && (strings.HasSuffix(urlString, ".jpg") || strings.HasSuffix(urlString, ".png")) {
-					fmt.Println(urlString)
-				}
-			}
-			pageNumber++
-		}
-	}
+        // TODO: Add remaining sites
+        a := Api{BaseUrl: "https://danbooru.donmai.us/", PostsPerPageLimit: 200, TagLimit: 2}
+        posts, err := a.Posts(tagString, useLargeFileUrls, maxPages)
+        try(err)
+        for _, p := range posts {
+            fmt.Println(p.PreviewFileUrl)
+        }
+    }
 }
 
 func GetTags() {
-	env := Environment(os.Getenv("BOORU_ENV"))
-	var url string
-	if env == DEV {
-		url = TestDomain
-	} else {
-		url = ProdDomain
-	}
     pageNumber := 1
     for {
-        tagsResp, err := http.Get(url + "/" + TagsStr + "&page=" + strconv.Itoa(pageNumber))
+        tagsResp, err := http.Get("" + "/" + TagsStr + "&page=" + strconv.Itoa(pageNumber))
         try(err)
 
         defer tagsResp.Body.Close()
